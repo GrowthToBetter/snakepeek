@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String? // optional seperti di model baru
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String? // menggantikan photo_profile
+
+  address String? // bisa diasumsikan pengganti school_id atau alamat umum
+
+  // Relasi tambahan dari model baru
+  accounts Account[]
+  sessions Session[]
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+
+model emergency_reports {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  report_number          String                   @unique @db.VarChar(50)
+  timestamp              DateTime?                @default(now()) @db.Timestamptz(6)
+  caller_info            String?
+  caller_phone           String?                  @db.VarChar(20)
+  location               String?
+  emergency_type         String?                  @db.VarChar(50)
+  urgency_level          Int?
+  description            String?
+  structured_data        Json?
+  lat                    Float?
+  lng                    Float?
+  geocode_confidence     String?
+  geocode_label          String?
+  fotoUrl                String?
+  ai_recommendations     Json?
+  status                 String?                  @default("BARU") @db.VarChar(20)
+  voice_file_path        String?
+  response_sent          Boolean?                 @default(false)
+  created_at             DateTime?                @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?                @default(now()) @db.Timestamp(6)
+  whatsapp_conversations whatsapp_conversations[]
+
+  @@index([status], map: "idx_emergency_reports_status")
+  @@index([timestamp], map: "idx_emergency_reports_timestamp")
+  @@index([urgency_level], map: "idx_emergency_reports_urgency")
+}
+
+model whatsapp_conversations {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phone_number      String             @db.VarChar(20)
+  message_sid       String?            @db.VarChar(100)
+  message_body      String?
+  message_type      String?            @db.VarChar(20)
+  media_url         String?
+  timestamp         DateTime?          @default(now()) @db.Timestamp(6)
+  report_id         String?            @db.Uuid
+  emergency_reports emergency_reports? @relation(fields: [report_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([phone_number], map: "idx_whatsapp_phone")
+}
+
+model regulation_docs {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String   @unique
+  category   String
+  excerpt    String?
+  url        String?
+  content    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+}
