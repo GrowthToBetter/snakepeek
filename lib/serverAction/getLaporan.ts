@@ -35,7 +35,7 @@ async function geocodeLocationAdvanced(lokasi: string) {
           query
         )}&countrycodes=id&addressdetails=1`;
         const res = await fetch(url, {
-          headers: { "User-Agent": "sirana-disaster-app/1.0" },
+          headers: { "User-Agent": "snakepeek-disaster-app/1.0" },
         });
 
         if (res.ok) {
